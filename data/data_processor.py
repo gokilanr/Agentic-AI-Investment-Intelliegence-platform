@@ -46,6 +46,39 @@ def standardize_market_data(data: pd.DataFrame) -> pd.DataFrame:
 
     return data
 
+def validate_ohlc_relationship(data:pd.DataFrame) -> bool:
+    """
+    Validate logical relationships between OHLC prices.
+    """
+    logger.info("Starting OHLC relationship validation.")
+
+    invalid_high = (
+        (data["High"] < data["Open"])
+        | (data["High"] < data["Close"])
+        | (data["High"] < data["Low"])
+    )
+
+    invalid_low = (
+        (data["Low"] < data["Open"])
+        | (data["Low"] < data["Close"])
+        | (data["Low"] < data["Low"])
+    )
+
+    invalid_rows = invalid_high | invalid_low
+
+    invalid_count = invalid_rows.sum()
+
+    if invalid_count > 0:
+        logger.error(
+            f"Found {invalid_count} rows with invalid OHLC relationships."
+        )
+
+        return False
+    logger.info("OHLC relationship validation passed.")
+
+    return True
+#remiaining is still is there codes
+
 if __name__ == "__main__":
 
     file_path = RAW_DATA_DIR / "RELIANCE_NS_historical.csv"
