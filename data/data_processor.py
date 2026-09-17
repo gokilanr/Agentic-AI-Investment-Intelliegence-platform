@@ -22,7 +22,7 @@ def load_raw_market_data(file_path) -> pd.DataFrame:
 
 def standardize_market_data(data: pd.DataFrame) -> pd.DataFrame:
     """
-    Standardize basic market  data sstructure
+    Standardize basic market  data structure
     """
     logger.info("Starting market data standardization.")
 
@@ -37,6 +37,9 @@ def standardize_market_data(data: pd.DataFrame) -> pd.DataFrame:
 
     #sort data chronologically
     data = data.sort_values("Date").reset_index(drop=True)
+
+    #Remove duplicate dates
+    data = remove_duplicate_dates(data)
 
     logger.info("Market data standardization completed.")
 
@@ -59,9 +62,9 @@ def validate_ohlc_relationship(data:pd.DataFrame) -> bool:
     )
 
     invalid_low = (
-        (data["Low"] < data["Open"])
-        | (data["Low"] < data["Close"])
-        | (data["Low"] < data["Low"])
+        (data["Low"] > data["Open"])
+        | (data["Low"] > data["Close"])
+        | (data["Low"] > data["Low"])
     )
 
     invalid_rows = invalid_high | invalid_low
@@ -77,7 +80,33 @@ def validate_ohlc_relationship(data:pd.DataFrame) -> bool:
     logger.info("OHLC relationship validation passed.")
 
     return True
-#remiaining is still is there codes
+
+def remove_duplicate_dates(data:pd.DataFrame) -> pd.DataFrame:
+    """
+    Rmove duplicate trading dates.
+    """
+    duplicate_count = data["Date"].duplicated().sum()
+
+    if duplicate_count == 0:
+        logger.info("No duplicate dates found.")
+        return data
+
+    logger.warning(
+        f"Found {duplicate_count} duplicate dates."
+        "Keeping the last record for each date." 
+    )
+
+    data = data.drop_duplicates(
+        subset=["Date"],
+        keep = "last"
+    ).reset_index(drop=True)
+
+    logger.info(
+        f"Removed {duplicate_count} duplicate date records."
+    )
+
+    return data
+
 
 if __name__ == "__main__":
 
@@ -86,6 +115,20 @@ if __name__ == "__main__":
     data = load_raw_market_data(file_path)
 
     data = standardize_market_data(data)
+
+    is_ohlc_valid = validate_ohlc_relationship(data)
+
+    if not is_ohlc_valid:
+        logger.error(
+            "OHLC validation failed."
+            "Stopping processing."
+        )
+
+        raise ValueError("Invalid OHLC relationship detected.")
+
+    logger.info(
+        f"Date date type: {data['Date'].dtype}"
+    )
 
     logger.info(
         f"Date range: {data['Date'].min()} to {data['Date'].max()}"
