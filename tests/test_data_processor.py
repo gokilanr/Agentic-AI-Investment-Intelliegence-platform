@@ -1,6 +1,7 @@
 import  pandas as pd
+import pytest 
 
-from data.data_processor import(remove_duplicate_dates, validate_ohlc_relationship)
+from data.data_processor import(remove_duplicate_dates, validate_ohlc_relationship,calculate_daily_return )
 
 
 def test_valid_ohlc_relationship():
@@ -66,3 +67,14 @@ def test_duplicate_dates_are_removed():
 
     assert len(result) == 3
     assert result["Date"].duplicated().sum() == 0
+
+def test_calculate_daily_return():
+    data = pd.DataFrame({
+        "Close": [100, 110, 99],
+    })
+
+    result = calculate_daily_return(data)
+
+    assert pd.isna(result.loc[0, "Daily_Return"])
+    assert result.loc[1, "Daily_Return"] == pytest.approx(0.10)
+    assert result.loc[2, "Daily_Return"] == pytest.approx(-0.10)

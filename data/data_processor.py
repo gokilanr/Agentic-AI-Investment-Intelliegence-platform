@@ -81,6 +81,20 @@ def validate_ohlc_relationship(data:pd.DataFrame) -> bool:
 
     return True
 
+def calculate_daily_return(data:pd.DataFrame) -> pd.DataFrame:
+
+    """
+    Calculate simple daily return based on closing price.
+    """
+
+    logger.info("Calculating daily returns.")
+
+    data["Daily_Return"] = data["Close"].pct_change()
+
+    logger.info("Daily return calculation completed.")
+
+    return data
+
 def remove_duplicate_dates(data:pd.DataFrame) -> pd.DataFrame:
     """
     Rmove duplicate trading dates.
@@ -117,6 +131,7 @@ if __name__ == "__main__":
     data = standardize_market_data(data)
 
     is_ohlc_valid = validate_ohlc_relationship(data)
+    
 
     if not is_ohlc_valid:
         logger.error(
@@ -126,8 +141,10 @@ if __name__ == "__main__":
 
         raise ValueError("Invalid OHLC relationship detected.")
 
+    data = calculate_daily_return(data)
+
     logger.info(
-        f"Date date type: {data['Date'].dtype}"
+        f"Date data type: {data['Date'].dtype}"
     )
 
     logger.info(
@@ -135,5 +152,6 @@ if __name__ == "__main__":
     )
 
     logger.info(
-        f"First 5 rows:\n{data.head()}"
+        f"First 5 rows:\n"
+        f"{data[['Date','Close', 'Daily_Return']].head()}"
     )
