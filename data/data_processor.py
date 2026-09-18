@@ -1,5 +1,5 @@
 import pandas as pd
-
+import numpy as np
 from utils.logger import get_logger
 from config.settings import RAW_DATA_DIR
 
@@ -95,6 +95,22 @@ def calculate_daily_return(data:pd.DataFrame) -> pd.DataFrame:
 
     return data
 
+def calculate_log_return(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate logarithmic daily return based on closing price.
+    """
+
+    logger.info("Calculating log returns.")
+
+    data["Log_Return"] = np.log(
+        data["Close"] / data["Close"].shift(1)
+    )
+
+    logger.info("Log return calculation completed.")
+
+    return data
+
+
 def remove_duplicate_dates(data:pd.DataFrame) -> pd.DataFrame:
     """
     Rmove duplicate trading dates.
@@ -143,9 +159,7 @@ if __name__ == "__main__":
 
     data = calculate_daily_return(data)
 
-    logger.info(
-        f"Date data type: {data['Date'].dtype}"
-    )
+    data = calculate_log_return(data)
 
     logger.info(
         f"Date range: {data['Date'].min()} to {data['Date'].max()}"
@@ -153,5 +167,5 @@ if __name__ == "__main__":
 
     logger.info(
         f"First 5 rows:\n"
-        f"{data[['Date','Close', 'Daily_Return']].head()}"
+        f"{data[['Date','Close', 'Daily_Return','Log_Return']].head()}"
     )
