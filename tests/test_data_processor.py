@@ -6,6 +6,7 @@ from data.data_processor import (
     validate_ohlc_relationship,
     calculate_daily_return,
     calculate_log_return,
+    calculate_moving_averages
 )
 
 def test_valid_ohlc_relationship():
@@ -97,3 +98,18 @@ def test_calculate_log_return():
     assert result.loc[2, "Log_Return"] == pytest.approx(
         -0.10536052
     )
+
+def test_calculate_moving_averages():
+    data = pd.DataFrame({
+        "Close": list(range(1, 51))
+    })
+
+    result = calculate_moving_averages(data)
+
+    #sma20
+    assert result["SMA_20"].iloc[:19].isna().all()
+    assert result["SMA_20"].iloc[19] == pytest.approx(10.5)
+
+    #sma50
+    assert result["SMA_50"].iloc[:49].isna().all()
+    assert result["SMA_50"].iloc[49] == pytest.approx(25.5)

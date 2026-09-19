@@ -110,10 +110,23 @@ def calculate_log_return(data: pd.DataFrame) -> pd.DataFrame:
 
     return data
 
+def calculate_moving_averages(data:pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate 20period simple moving average based on closing price,
+    """
+
+    logger.info("Calculating moving averages.")
+
+    data["SMA_20"] = data["Close"].rolling(window=20).mean()
+    data["SMA_50"] = data["Close"].rolling(window=50).mean()
+
+    logger.info("Moving average calculation completed.")
+
+    return data
 
 def remove_duplicate_dates(data:pd.DataFrame) -> pd.DataFrame:
     """
-    Rmove duplicate trading dates.
+    Remove duplicate trading dates.
     """
     duplicate_count = data["Date"].duplicated().sum()
 
@@ -160,6 +173,7 @@ if __name__ == "__main__":
     data = calculate_daily_return(data)
 
     data = calculate_log_return(data)
+    data = calculate_moving_averages(data)
 
     logger.info(
         f"Date range: {data['Date'].min()} to {data['Date'].max()}"
@@ -167,5 +181,18 @@ if __name__ == "__main__":
 
     logger.info(
         f"First 5 rows:\n"
-        f"{data[['Date','Close', 'Daily_Return','Log_Return']].head()}"
+        f"{data[
+            ['Date',
+             'Close',
+              'Daily_Return',
+              'Log_Return',
+              'SMA_20',
+              'SMA_50'
+            ]
+        ].head()}"
+    )
+
+    logger.info(
+    f"Moving average sample:\n"
+    f"{data[['Date', 'Close', 'SMA_20', 'SMA_50']].iloc[49:52]}"
     )
