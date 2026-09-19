@@ -125,6 +125,24 @@ def calculate_moving_averages(data:pd.DataFrame) -> pd.DataFrame:
 
     return data
 
+def calculate_rolling_volatility(data:pd.DataFrame) -> pd.DataFrame:
+
+    """
+    Caculate 20 period rolling volatility based on daily  returns.
+    """
+
+    logger.info("Caculating rolling volatility.")
+
+    data["Rolling_Volatility_20"] = (
+        data["Daily_Return"]
+        .rolling(window=20)
+        .std()
+    )
+
+    logger.info("Rolling Volatitliy calculation commpleted.")
+
+    return data
+
 def remove_duplicate_dates(data:pd.DataFrame) -> pd.DataFrame:
     """
     Remove duplicate trading dates.
@@ -175,6 +193,7 @@ if __name__ == "__main__":
 
     data = calculate_log_return(data)
     data = calculate_moving_averages(data)
+    data = calculate_rolling_volatility(data)
 
     logger.info(
         f"Date range: {data['Date'].min()} to {data['Date'].max()}"
@@ -196,5 +215,5 @@ if __name__ == "__main__":
 
     logger.info(
     f"Moving average sample:\n"
-    f"{data[['Date', 'Close', 'SMA_20', 'SMA_50','SMA_200']].iloc[199:202]}"
+    f"{data[['Date', 'Close', 'SMA_20', 'SMA_50','SMA_200','Rolling_Volatility_20']].iloc[19:24]}"
     )

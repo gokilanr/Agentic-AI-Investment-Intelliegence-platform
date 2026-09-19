@@ -6,7 +6,8 @@ from data.data_processor import (
     validate_ohlc_relationship,
     calculate_daily_return,
     calculate_log_return,
-    calculate_moving_averages
+    calculate_moving_averages,
+    calculate_rolling_volatility
 )
 
 def test_valid_ohlc_relationship():
@@ -117,3 +118,14 @@ def test_calculate_moving_averages():
     #sma50
     assert result["SMA_200"].iloc[:199].isna().all()
     assert result["SMA_200"].iloc[199] == pytest.approx(100.5)
+
+
+def test_calculate_rolling_volatility():
+    data = pd.DataFrame({
+        "Daily_Return": [0.01] * 20
+    })
+
+    result = calculate_rolling_volatility(data)
+
+    assert result["Rolling_Volatility_20"].iloc[:19].isna().all()
+    assert result["Rolling_Volatility_20"].iloc[19] == pytest.approx(0.0)
