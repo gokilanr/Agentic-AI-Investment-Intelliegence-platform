@@ -119,6 +119,7 @@ def calculate_moving_averages(data:pd.DataFrame) -> pd.DataFrame:
 
     data["SMA_20"] = data["Close"].rolling(window=20).mean()
     data["SMA_50"] = data["Close"].rolling(window=50).mean()
+    data["SMA_200"] =  data["Close"].rolling(window=200).mean()
 
     logger.info("Moving average calculation completed.")
 
@@ -187,12 +188,13 @@ if __name__ == "__main__":
               'Daily_Return',
               'Log_Return',
               'SMA_20',
-              'SMA_50'
+              'SMA_50',
+              'SMA_200'
             ]
         ].head()}"
     )
 
     logger.info(
     f"Moving average sample:\n"
-    f"{data[['Date', 'Close', 'SMA_20', 'SMA_50']].iloc[49:52]}"
+    f"{data[['Date', 'Close', 'SMA_20', 'SMA_50','SMA_200']].iloc[199:202]}"
     )

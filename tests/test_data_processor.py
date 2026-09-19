@@ -101,7 +101,7 @@ def test_calculate_log_return():
 
 def test_calculate_moving_averages():
     data = pd.DataFrame({
-        "Close": list(range(1, 51))
+        "Close": list(range(1, 201))
     })
 
     result = calculate_moving_averages(data)
@@ -113,3 +113,7 @@ def test_calculate_moving_averages():
     #sma50
     assert result["SMA_50"].iloc[:49].isna().all()
     assert result["SMA_50"].iloc[49] == pytest.approx(25.5)
+
+    #sma50
+    assert result["SMA_200"].iloc[:199].isna().all()
+    assert result["SMA_200"].iloc[199] == pytest.approx(100.5)
