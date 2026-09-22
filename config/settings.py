@@ -15,6 +15,10 @@ RAW_DATA_DIR = DATA_DIR / "raw"
 PROCESSED_DATA_DIR = DATA_DIR / "processed"
 EXTERNAL_DATA_DIR = DATA_DIR/ "external"
 
+RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
+PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
+EXTERNAL_DATA_DIR.mkdir(parents=True, exist_ok=True)
+
 #RAG directories
 RAG_DIR = BASE_DIR / "rag"
 DOCUMENTS_DIR = RAG_DIR / "documents"

@@ -1,5 +1,6 @@
 import  pandas as pd
 import pytest 
+import numpy as np
 
 from data.data_processor import (
     remove_duplicate_dates,
@@ -10,7 +11,9 @@ from data.data_processor import (
     calculate_rolling_volatility,
     calculate_momentum_features,
     calculate_price_vs_moving_average,
-    calculate_volume_features
+    calculate_volume_features,
+    validate_processed_features,
+    validate_processed_data
 )
 
 def test_valid_ohlc_relationship():
@@ -191,3 +194,65 @@ def test_calculate_volume_features():
     assert result["Volume_SMA_20"].iloc[:19].isna().all()
     assert result["Volume_SMA_20"].iloc[19] == pytest.approx(100)
     assert result["Volume_Ratio"].iloc[19] == pytest.approx(1.0)
+
+def test_validate_processed_features():
+    data = pd.DataFrame({
+        "Date": [],
+        "Open": [],
+        "High": [],
+        "Low": [],
+        "Close": [],
+        "Volume": [],
+        "Daily_Return": [],
+        "Log_Return": [],
+        "SMA_20": [],
+        "SMA_50": [],
+        "SMA_200": [],
+        "Rolling_Volatility_20": [],
+        "Rolling_Volatility_50": [],
+        "Annualized_Volatility_20": [],
+        "Annualized_Volatility_50": [],
+        "Momentum_20": [],
+        "Momentum_50": [],
+        "ROC_20": [],
+        "ROC_50": [],
+        "Price_vs_SMA_20": [],
+        "Price_vs_SMA_50": [],
+        "Price_vs_SMA_200": [],
+        "Volume_Change": [],
+        "Volume_SMA_20": [],
+        "Volume_Ratio": [],
+    })
+
+    assert validate_processed_features(data)
+
+def test_validate_processed_data_rejects_infinite_values():
+    data = pd.DataFrame({
+        "Date": ["2026-01-01"],
+        "Open": [100],
+        "High": [105],
+        "Low": [95],
+        "Close": [102],
+        "Volume": [1000],
+        "Daily_Return": [np.inf],
+        "Log_Return": [0.01],
+        "SMA_20": [100],
+        "SMA_50": [100],
+        "SMA_200": [100],
+        "Rolling_Volatility_20": [0.02],
+        "Rolling_Volatility_50": [0.03],
+        "Annualized_Volatility_20": [0.31],
+        "Annualized_Volatility_50": [0.47],
+        "Momentum_20": [2],
+        "Momentum_50": [5],
+        "ROC_20": [0.02],
+        "ROC_50": [0.05],
+        "Price_vs_SMA_20": [0.02],
+        "Price_vs_SMA_50": [0.02],
+        "Price_vs_SMA_200": [0.02],
+        "Volume_Change": [0.1],
+        "Volume_SMA_20": [900],
+        "Volume_Ratio": [1.1],
+    })
+
+    assert not validate_processed_data(data)

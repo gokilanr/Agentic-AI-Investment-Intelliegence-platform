@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from utils.logger import get_logger
-from config.settings import RAW_DATA_DIR
+from config.settings import RAW_DATA_DIR,PROCESSED_DATA_DIR
 
 logger = get_logger(__name__)
 
@@ -215,6 +215,7 @@ def calculate_volume_features(data:pd.DataFrame) -> pd.DataFrame:
 
     data["Volume_Change"] = (
         data["Volume"].pct_change()
+        .replace([np.inf, -np.inf], np.nan)
     )
 
     data["Volume_SMA_20"] = (
@@ -255,66 +256,156 @@ def remove_duplicate_dates(data:pd.DataFrame) -> pd.DataFrame:
 
     return data
 
+def validate_processed_features(data:pd.DataFrame) -> bool:
+    """
+    Validate that the final processed dataset
+    contains the expected financial features.
+    """
 
-if __name__ == "__main__":
+    required_features = [
+        "Date",
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+        "Daily_Return",
+        "Log_Return",
+        "SMA_20",
+        "SMA_50",
+        "SMA_200",
+        "Rolling_Volatility_20",
+        "Rolling_Volatility_50",
+        "Annualized_Volatility_20",
+        "Annualized_Volatility_50",
+        "Momentum_20",
+        "Momentum_50",
+        "ROC_20",
+        "ROC_50",
+        "Price_vs_SMA_20",
+        "Price_vs_SMA_50",
+        "Price_vs_SMA_200",
+        "Volume_Change",
+        "Volume_SMA_20",
+        "Volume_Ratio"
+    ]
 
-    file_path = RAW_DATA_DIR / "RELIANCE_NS_historical.csv"
+    missing_features = [
+        feature
+        for feature in required_features
+        if feature not in data.columns
+    ]
 
-    data = load_raw_market_data(file_path)
-
-    data = standardize_market_data(data)
-
-    is_ohlc_valid = validate_ohlc_relationship(data)
-    
-
-    if not is_ohlc_valid:
+    if missing_features:
         logger.error(
-            "OHLC validation failed."
-            "Stopping processing."
+            f"Missing processed features: {missing_features}"
+        )
+        return False
+
+    logger.info("Processed feature validation passed.")
+
+    return True
+
+def validate_processed_data(data: pd.DataFrame) -> bool:
+    """
+    Validate the final processed dataset.
+    """
+
+    logger.info("Starting processed dataset validation.")
+
+    if not validate_processed_features(data):
+        return False
+
+    numeric_columns = data.select_dtypes(
+        include=np.number
+    ).columns
+
+    infinite_values = np.isinf(
+        data[numeric_columns]
+    ).sum().sum()
+
+    if infinite_values > 0:
+        logger.error(
+            f"Found {infinite_values} infinite values."
         )
 
-        raise ValueError("Invalid OHLC relationship detected.")
-
-    data = calculate_daily_return(data)
-
-    data = calculate_log_return(data)
-    data = calculate_moving_averages(data)
-    data = calculate_rolling_volatility(data)
-    data = calculate_momentum_features(data)
-
-    data = calculate_price_vs_moving_average(data)
-
-    data = calculate_volume_features(data)
+        return False
 
     logger.info(
-        f"Date range: {data['Date'].min()} to {data['Date'].max()}"
+        "Processed dataset validation passed."
     )
 
+    return True
+
+def save_processed_market_data( data:pd.DataFrame, ticker : str) -> None:
+    """
+    Save the Final feature- engineered market dataset.
+    """
+
     logger.info(
-    f"Final feature sample:\n"
-    f"{data[
-        [
-            "Date",
-            "Close",
-            "Daily_Return",
-            "Log_Return",
-            "SMA_20",
-            "SMA_50",
-            "SMA_200",
-            "Rolling_Volatility_20",
-            "Rolling_Volatility_50",
-            "Annualized_Volatility_20",
-            "Annualized_Volatility_50",
-            "Momentum_20",
-            "Momentum_50",
-            "ROC_20",
-            "ROC_50",
-            "Price_vs_SMA_20",
-            "Price_vs_SMA_50",
-            "Price_vs_SMA_200",
-            "Volume_Change",
-            "Volume_SMA_20",
-            "Volume_Ratio",
-        ]
-    ].tail()}"
-)
+        f"Saving processed market data for {ticker}."
+    )
+
+    file_name = f"{ticker.replace('.','_')}_processed.csv"
+    file_path = PROCESSED_DATA_DIR / file_name
+
+    data.to_csv(file_path, index=False)
+
+    logger.info(
+        f"Processed data saved to: {file_path}"
+    )
+
+def main():
+    ticker = "RELIANCE.NS"
+
+    file_path = (
+        RAW_DATA_DIR / "RELIANCE_NS_historical.csv"
+    )
+
+    try:
+        data = load_raw_market_data(file_path)
+
+        data = standardize_market_data(data)
+
+        if not validate_ohlc_relationship(data):
+            raise ValueError(
+                "Invalid OHLC relationship detected."
+            )
+
+        data = calculate_daily_return(data)
+
+        data = calculate_log_return(data)
+
+        data = calculate_moving_averages(data)
+
+        data = calculate_rolling_volatility(data)
+
+        data = calculate_momentum_features(data)
+
+        data = calculate_price_vs_moving_average(data)
+
+        data = calculate_volume_features(data)
+
+        if not validate_processed_data(data):
+            raise ValueError(
+                "Processed dataset validation failed."
+            )
+
+        save_processed_market_data(
+            data,
+            ticker
+        )
+
+        logger.info(
+            "Market data processing pipeline completed successfully."
+        )
+
+    except Exception as error:
+        logger.error(
+            f"Market data processing failed: {error}"
+        )
+        raise
+
+
+if __name__ == "__main__":
+    main()
