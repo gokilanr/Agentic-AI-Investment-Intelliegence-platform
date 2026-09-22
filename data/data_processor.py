@@ -157,6 +157,78 @@ def calculate_rolling_volatility(data:pd.DataFrame) -> pd.DataFrame:
 
     return data
 
+def calculate_momentum_features(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Caculate price momentum features.
+    """
+
+    logger.info("Caculating momentum features.")
+
+    data["Momentum_20"] = (
+        data["Close"] - data["Close"].shift(20)
+    )
+
+    data["Momentum_50"] = (
+            data["Close"] - data["Close"].shift(50)
+    )
+
+    data["ROC_20"] = (
+        data["Close"].pct_change(periods=20)
+    )
+
+    data["ROC_50"] = (
+            data["Close"].pct_change(periods=50)
+    )
+
+    return data
+
+def calculate_price_vs_moving_average(data: pd.DataFrame) -> pd.DataFrame:
+
+    """
+    Caculate the percentage difference between current pice and moving averages
+    """
+
+    logger.info("Caculating price vs moving average features.")
+
+    data["Price_vs_SMA_20"] = (
+        data["Close"] / data["SMA_20"]
+    ) - 1
+
+    data["Price_vs_SMA_50"] = (
+        data["Close"] / data["SMA_50"]
+    ) - 1
+
+    data["Price_vs_SMA_200"] = (
+        data["Close"] / data["SMA_200"]
+    ) - 1
+
+    logger.info("Price Vs moving avergae features calculation completed.")
+
+    return data
+
+def calculate_volume_features(data:pd.DataFrame) -> pd.DataFrame:
+    """
+    Caculate volume-based features.
+    """
+
+    logger.info("Caculating volume features.")
+
+    data["Volume_Change"] = (
+        data["Volume"].pct_change()
+    )
+
+    data["Volume_SMA_20"] = (
+        data["Volume"].rolling(window=20).mean()
+    )
+
+    data["Volume_Ratio"] = (
+        data["Volume"] / data["Volume_SMA_20"]
+    )
+
+    logger.info("Volume feature calculation completed.")
+
+    return data
+
 def remove_duplicate_dates(data:pd.DataFrame) -> pd.DataFrame:
     """
     Remove duplicate trading dates.
@@ -208,40 +280,41 @@ if __name__ == "__main__":
     data = calculate_log_return(data)
     data = calculate_moving_averages(data)
     data = calculate_rolling_volatility(data)
+    data = calculate_momentum_features(data)
+
+    data = calculate_price_vs_moving_average(data)
+
+    data = calculate_volume_features(data)
 
     logger.info(
         f"Date range: {data['Date'].min()} to {data['Date'].max()}"
     )
 
     logger.info(
-        f"First 5 rows:\n"
-        f"{data[
-            ['Date',
-             'Close',
-              'Daily_Return',
-              'Log_Return',
-              'SMA_20',
-              'SMA_50',
-              'SMA_200'
-            ]
-        ].head()}"
-    )
-
-    logger.info(
-    f"Moving average sample:\n"
-    f"{data[['Date', 'Close', 'SMA_20', 'SMA_50','SMA_200','Rolling_Volatility_20']].iloc[19:24]}"
-    )
-
-    logger.info(
-    f"Volatility sample:\n"
+    f"Final feature sample:\n"
     f"{data[
         [
             "Date",
+            "Close",
             "Daily_Return",
+            "Log_Return",
+            "SMA_20",
+            "SMA_50",
+            "SMA_200",
             "Rolling_Volatility_20",
             "Rolling_Volatility_50",
             "Annualized_Volatility_20",
             "Annualized_Volatility_50",
+            "Momentum_20",
+            "Momentum_50",
+            "ROC_20",
+            "ROC_50",
+            "Price_vs_SMA_20",
+            "Price_vs_SMA_50",
+            "Price_vs_SMA_200",
+            "Volume_Change",
+            "Volume_SMA_20",
+            "Volume_Ratio",
         ]
-    ].iloc[49:54]}"
+    ].tail()}"
 )

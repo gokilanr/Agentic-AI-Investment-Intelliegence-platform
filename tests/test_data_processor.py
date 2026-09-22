@@ -7,7 +7,10 @@ from data.data_processor import (
     calculate_daily_return,
     calculate_log_return,
     calculate_moving_averages,
-    calculate_rolling_volatility
+    calculate_rolling_volatility,
+    calculate_momentum_features,
+    calculate_price_vs_moving_average,
+    calculate_volume_features
 )
 
 def test_valid_ohlc_relationship():
@@ -149,3 +152,42 @@ def test_annualized_volatility():
 
     assert result["Annualized_Volatility_20"].iloc[19] == pytest.approx(0.0)
     assert result["Annualized_Volatility_50"].iloc[49] == pytest.approx(0.0)
+
+def test_calculate_momentum_features():
+    data = pd.DataFrame({
+        "Close": [100] * 20 + [110] * 20 + [120] * 20
+    })
+
+    result = calculate_momentum_features(data)
+
+    assert result["Momentum_20"].iloc[20] == pytest.approx(10)
+    assert result["Momentum_50"].iloc[50] == pytest.approx(20)
+
+    assert result["ROC_20"].iloc[20] == pytest.approx(0.10)
+    assert result["ROC_50"].iloc[50] == pytest.approx(20 / 100)
+
+def test_calculate_price_vs_moving_average():
+    data = pd.DataFrame({
+        "Close": [100] * 200
+    })
+
+    data["SMA_20"] = 100
+    data["SMA_50"] = 100
+    data["SMA_200"] = 100
+
+    result = calculate_price_vs_moving_average(data)
+
+    assert result["Price_vs_SMA_20"].iloc[199] == pytest.approx(0.0)
+    assert result["Price_vs_SMA_50"].iloc[199] == pytest.approx(0.0)
+    assert result["Price_vs_SMA_200"].iloc[199] == pytest.approx(0.0)
+
+def test_calculate_volume_features():
+    data = pd.DataFrame({
+        "Volume": [100] * 20
+    })
+
+    result = calculate_volume_features(data)
+
+    assert result["Volume_SMA_20"].iloc[:19].isna().all()
+    assert result["Volume_SMA_20"].iloc[19] == pytest.approx(100)
+    assert result["Volume_Ratio"].iloc[19] == pytest.approx(1.0)
