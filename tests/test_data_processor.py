@@ -129,3 +129,23 @@ def test_calculate_rolling_volatility():
 
     assert result["Rolling_Volatility_20"].iloc[:19].isna().all()
     assert result["Rolling_Volatility_20"].iloc[19] == pytest.approx(0.0)
+
+def test_calculate_50_day_rolling_volatility():
+    data = pd.DataFrame({
+        "Daily_Return": [0.01] * 50
+    })
+
+    result = calculate_rolling_volatility(data)
+
+    assert result["Rolling_Volatility_50"].iloc[:49].isna().all()
+    assert result["Rolling_Volatility_50"].iloc[49] == pytest.approx(0.0)
+
+def test_annualized_volatility():
+    data = pd.DataFrame({
+        "Daily_Return": [0.01] * 50
+    })
+
+    result = calculate_rolling_volatility(data)
+
+    assert result["Annualized_Volatility_20"].iloc[19] == pytest.approx(0.0)
+    assert result["Annualized_Volatility_50"].iloc[49] == pytest.approx(0.0)

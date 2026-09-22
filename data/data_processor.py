@@ -139,7 +139,21 @@ def calculate_rolling_volatility(data:pd.DataFrame) -> pd.DataFrame:
         .std()
     )
 
-    logger.info("Rolling Volatitliy calculation commpleted.")
+    data["Rolling_Volatility_50"] = (
+            data["Daily_Return"]
+            .rolling(window=50)
+            .std()
+        )
+
+    data["Annualized_Volatility_20"] = (
+        data["Rolling_Volatility_20"] * np.sqrt(252)
+    )
+
+    data["Annualized_Volatility_50"] = (
+        data["Rolling_Volatility_50"] * np.sqrt(252)
+    )
+
+    logger.info("Rolling Volatitlity calculation commpleted.")
 
     return data
 
@@ -217,3 +231,17 @@ if __name__ == "__main__":
     f"Moving average sample:\n"
     f"{data[['Date', 'Close', 'SMA_20', 'SMA_50','SMA_200','Rolling_Volatility_20']].iloc[19:24]}"
     )
+
+    logger.info(
+    f"Volatility sample:\n"
+    f"{data[
+        [
+            "Date",
+            "Daily_Return",
+            "Rolling_Volatility_20",
+            "Rolling_Volatility_50",
+            "Annualized_Volatility_20",
+            "Annualized_Volatility_50",
+        ]
+    ].iloc[49:54]}"
+)
