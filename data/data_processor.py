@@ -336,6 +336,59 @@ def validate_processed_data(data: pd.DataFrame) -> bool:
     )
 
     return True
+def validate_feature_quality( data:pd.DataFrame) -> bool:
+    """
+    Validate structural and time series quality
+    of the processed market dataset.
+    """
+    logger.info("Starting feature quality validation.")
+
+    #1.check chronological order
+    if not data["Date"].is_monotonic_increasing:
+        logger.error(
+            "Date column is not in chronological order."
+        )
+
+        return False
+
+    #2. Check duplicate dates
+    duplicate_dates = data["Date"].duplicated().sum()
+
+    if duplicate_dates > 0:
+        logger.error(
+            f"Found {duplicate_dates} duplicate dates."
+        )
+        return False
+
+    #3.Check numeric feature columns
+    numeric_columns = data.select_dtypes(
+        include=np.number
+    ).columns
+
+    if len(numeric_columns) == 0:
+        logger.error(
+            "No numeric feature columnss found."
+        )
+
+        return False
+
+    #4. Check infinite values
+    infinite_values = np.isinf(
+        data[numeric_columns]
+    ).sum().sum()
+
+    if infinite_values > 0:
+        logger.error(
+            f"Found {infinite_values} infinite values."
+        )
+
+        return False
+
+    logger.info(
+        "Feature quality validation passed."
+    )
+
+    return True
 
 def save_processed_market_data( data:pd.DataFrame, ticker : str) -> None:
     """
@@ -389,6 +442,11 @@ def main():
         if not validate_processed_data(data):
             raise ValueError(
                 "Processed dataset validation failed."
+            )
+
+        if not validate_feature_quality(data):
+            raise ValueError(
+                "Feature quality validation failed."
             )
 
         save_processed_market_data(

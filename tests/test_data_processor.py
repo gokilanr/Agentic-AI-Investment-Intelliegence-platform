@@ -13,7 +13,8 @@ from data.data_processor import (
     calculate_price_vs_moving_average,
     calculate_volume_features,
     validate_processed_features,
-    validate_processed_data
+    validate_processed_data,
+    validate_feature_quality
 )
 
 def test_valid_ohlc_relationship():
@@ -256,3 +257,43 @@ def test_validate_processed_data_rejects_infinite_values():
     })
 
     assert not validate_processed_data(data)
+
+def test_validate_feature_quality():
+    data = pd.DataFrame({
+        "Date": pd.date_range(
+            "2026-01-01",
+            periods=3,
+            freq="D"
+        ),
+        "Close": [100, 101, 102],
+        "Volume": [1000, 1100, 1200],
+    })
+
+    assert validate_feature_quality(data)
+
+
+def test_validate_feature_quality_rejects_unsorted_dates():
+    data = pd.DataFrame({
+        "Date": pd.to_datetime([
+            "2026-01-03",
+            "2026-01-01",
+            "2026-01-02",
+        ]),
+        "Close": [102, 100, 101],
+        "Volume": [1200, 1000, 1100],
+    })
+
+    assert not validate_feature_quality(data)
+
+def test_validate_feature_quality_rejects_duplicate_dates():
+    data = pd.DataFrame({
+        "Date": pd.to_datetime([
+            "2026-01-01",
+            "2026-01-02",
+            "2026-01-02",
+        ]),
+        "Close": [100, 101, 102],
+        "Volume": [1000, 1100, 1200],
+    })
+
+    assert not validate_feature_quality(data)
